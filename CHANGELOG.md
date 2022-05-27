@@ -9,4 +9,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation of the CHANGELOG.md based on keepachangelog convention
 - Ability to create/update a draft GitHub release based on the CHANGELOG.md
 - Allow releasing (using PRs) of the CHANGELOG.md
-
