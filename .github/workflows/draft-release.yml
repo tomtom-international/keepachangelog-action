@@ -1,0 +1,30 @@
+---
+name: Create Draft release based on the CHANGELOG.md
+
+concurrency: deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  changelog:
+    name: Update draft release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check-out the repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python v3.7
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.7'
+
+      - name: Validate Changelog
+        uses: ./
+        with:
+          deploy: draft
+          token: ${{ github.token }}
+s

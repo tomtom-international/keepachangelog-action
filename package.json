@@ -1,0 +1,35 @@
+{
+  "name": "keepachangelog-manager",
+  "version": "1.0.0",
+  "description": "Keepachangelog Action",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "ncc build -o dist src/main.ts && cp -f requirements.txt dist/requirements.txt",
+    "test": "echo \"Warning: no test specified\"",
+    "lint": "prettier --check **/*.ts",
+    "format": "prettier --write **/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tomtom-international/keepachangelog-action.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/tomtom-international/keepachangelog-action/issues"
+  },
+  "homepage": "https://github.com/tomtom-international/keepachangelog-action#readme",
+  "dependencies": {
+    "@actions/core": "^1.8.2",
+    "@actions/exec": "^1.1.1",
+    "@actions/github": "^5.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^17.0.35",
+    "prettier": "2.6.2",
+    "typescript": "^4.7.2",
+    "@vercel/ncc": "^0.34.0"
+  },
+  "files": ["requirements.txt"]
+}

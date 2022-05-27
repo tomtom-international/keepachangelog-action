@@ -1,0 +1,25 @@
+---
+
+name: Quality Checks
+on:
+  pull_request:
+    types: [edited, opened, synchronize, reopened]
+
+jobs:
+  changelog:
+    name: Validate Changelog
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check-out the repository
+        uses: actions/checkout@v3
+
+      - name: Setup Python v3.7
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.7'
+
+      - name: Validate Changelog
+        uses: ./
+        with:
+          token: ${{ github.token }}
