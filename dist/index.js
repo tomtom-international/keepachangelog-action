@@ -10002,7 +10002,6 @@ const repository = {
 };
 /**
  * Retrieves the CHANGELOG.md from the current repository
-
  */
 function retrieve_changelog() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -10091,6 +10090,17 @@ function create_update_branch_if_needed(source_branch, target_branch) {
         });
     });
 }
+function get_commit_message(version) {
+    const commit_message_re = /\{version\}/gi;
+    const commit_message = core.getInput("message");
+    return commit_message.replace(commit_message_re, version);
+}
+function determine_default_branch() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const { data: metadata } = yield octokit.rest.repos.get(Object.assign({}, repository));
+        return metadata.default_branch;
+    });
+}
 /**
  * Releases the latest GitHub release to the main branch
  */
@@ -10111,13 +10121,15 @@ function release_changelog() {
         ], {
             silent: true,
         });
-        const target_branch = `docs/update-changelog-for-${release.tag_name}`;
-        yield create_update_branch_if_needed("master", target_branch);
+        const default_branch = yield determine_default_branch();
+        const update_branch = `docs/update-changelog-for-${release.tag_name}`;
+        const commit_message = get_commit_message(release.tag_name);
+        yield create_update_branch_if_needed(default_branch, update_branch);
         const updated_content = fs.readFileSync("CHANGELOG.md", {
             encoding: "utf8",
             flag: "r",
         });
-        let request = Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md", message: `docs(changelog): update CHANGELOG.md for ${release.tag_name}`, content: Buffer.from(updated_content, "utf8").toString("base64"), branch: target_branch });
+        let request = Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md", message: commit_message, content: Buffer.from(updated_content, "utf8").toString("base64"), branch: update_branch });
         try {
             const { data: changelog } = yield octokit.rest.repos.getContent(Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md" }));
             request["sha"] = changelog.sha;
@@ -10128,6 +10140,12 @@ function release_changelog() {
             }
         }
         yield octokit.rest.repos.createOrUpdateFileContents(request);
+        try {
+            yield octokit.rest.pulls.create(Object.assign(Object.assign({}, repository), { head: update_branch, base: default_branch, title: commit_message, body: release.body }));
+        }
+        catch (error) {
+            // Do nothing
+        }
     });
 }
 exports.release_changelog = release_changelog;
