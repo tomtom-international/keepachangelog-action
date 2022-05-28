@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.2] - 2022-05-28
 ### Changed
 - GitHub Actions releases process now allows uses to use the MAJOR version (i.e. `v1`)
+- Added instruction usage to the documentation
 
 ## [0.0.1] - 2022-05-28
 ### Added
