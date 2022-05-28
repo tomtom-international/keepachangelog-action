@@ -30,6 +30,11 @@ inputs:
     description: '(Optional) Deployment type (`draft` or `release`) to execute'
     required: false
 
+  message:
+    description: '(Optional) Commit message'
+    default: 'docs(release): update CHANGELOG.md for {version}'
+    required: false
+
 runs:
   using: 'node16'
   main: 'dist/index.js'

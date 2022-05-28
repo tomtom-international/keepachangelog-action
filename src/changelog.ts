@@ -30,7 +30,6 @@ const repository = {
 
 /**
  * Retrieves the CHANGELOG.md from the current repository
-
  */
 export async function retrieve_changelog() {
   const ref = process.env.GITHUB_REF;
@@ -143,6 +142,21 @@ async function create_update_branch_if_needed(
     });
 }
 
+function get_commit_message(version: string) {
+  const commit_message_re = /\{version\}/gi;
+  const commit_message = core.getInput("message");
+
+  return commit_message.replace(commit_message_re, version);
+}
+
+async function determine_default_branch() {
+  const { data: metadata } = await octokit.rest.repos.get({
+    ...repository,
+  });
+
+  return metadata.default_branch;
+}
+
 /**
  * Releases the latest GitHub release to the main branch
  */
@@ -166,9 +180,10 @@ export async function release_changelog() {
       silent: true,
     }
   );
-
-  const target_branch = `docs/update-changelog-for-${release.tag_name}`;
-  await create_update_branch_if_needed("master", target_branch);
+  const default_branch = await determine_default_branch();
+  const update_branch = `docs/update-changelog-for-${release.tag_name}`;
+  const commit_message = get_commit_message(release.tag_name);
+  await create_update_branch_if_needed(default_branch, update_branch);
 
   const updated_content = fs.readFileSync("CHANGELOG.md", {
     encoding: "utf8",
@@ -177,9 +192,9 @@ export async function release_changelog() {
   let request = {
     ...repository,
     path: "CHANGELOG.md",
-    message: `docs(changelog): update CHANGELOG.md for ${release.tag_name}`,
+    message: commit_message,
     content: Buffer.from(updated_content, "utf8").toString("base64"),
-    branch: target_branch,
+    branch: update_branch,
   };
 
   try {
@@ -195,4 +210,16 @@ export async function release_changelog() {
   }
 
   await octokit.rest.repos.createOrUpdateFileContents(request);
+
+  try {
+    await octokit.rest.pulls.create({
+      ...repository,
+      head: update_branch,
+      base: default_branch,
+      title: commit_message,
+      body: release.body,
+    });
+  } catch (error: any) {
+    // Do nothing
+  }
 }
