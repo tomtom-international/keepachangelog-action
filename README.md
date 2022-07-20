@@ -135,4 +135,4 @@ jobs:
 
 
 [keepachangelog convention]: http://keepachangelog.com/
-[(Keep a) Changelog Manager]: https://pypi.org/project/commisery/
+[(Keep a) Changelog Manager]: https://pypi.org/project/keepachangelog-manager/
