@@ -26,8 +26,9 @@ inputs:
     description: 'GitHub token used to access GitHub (eg. github.token)'
     required: true
   
-  deploy:
-    description: '(Optional) Deployment type (`draft` or `release`) to execute'
+  publish:
+    description: '(Optional) Release your CHANGELOG.md using GitHub Releases'
+    default: false
     required: false
 
   message:
