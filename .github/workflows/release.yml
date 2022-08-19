@@ -18,8 +18,9 @@ name: Release and Deploy GitHub Action
 concurrency: deployment
 
 on:
-  release:
-    types: [released]
+  push:
+    branches:
+      - main
 
 jobs:
   update-changelog:
@@ -27,10 +28,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check-out the repository
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-      - name: Setup Python v3.7
+      - name: Set-up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.7'
@@ -38,8 +38,9 @@ jobs:
       - name: Release Changelog
         uses: ./
         with:
-          deploy: release
-          token: ${{ github.token }}
+          token: ${{ secrets.RELEASE_TOKEN }}
+          publish: true
+          
 
   release-action:
     runs-on: ubuntu-latest

@@ -20,29 +20,37 @@ import { prepare_environment } from "./environment";
 import {
   retrieve_changelog,
   validate_changelog,
-  create_draft_release,
+  create_github_release,
+  has_unreleased_version,
   release_changelog,
 } from "./changelog";
 
 async function run() {
-  // Ensure that keepachangelog-manager is installed
   try {
     console.log("🌲 Preparing environment...");
     await prepare_environment();
+
     console.log("🚀 Validating CHANGELOG.md...");
     await retrieve_changelog();
+
     await validate_changelog();
     console.log(
       "✅ Your CHANGELOG.md complies to the keepachangelog convention"
     );
-    const deployment_type = core.getInput("deploy");
-    if (deployment_type.toLowerCase() === "draft") {
-      create_draft_release();
-      console.log("📦 Updated your draft release!");
-    } else if (deployment_type.toLowerCase() === "release") {
-      release_changelog();
-      console.log("🚢 Released latest CHANGELOG.md");
+
+    const can_release = await has_unreleased_version();
+    const publish_release = JSON.parse(core.getInput("publish"));
+    if (!can_release || !publish_release) {
+      return;
     }
+
+    console.log("🏁 Releasing your CHANGELOG.md");
+    await release_changelog();
+
+    console.log("📦 Creating a new GitHub Release...");
+    await create_github_release();
+
+    console.log("🚢 Published the GitHub Release!");
   } catch (ex) {
     core.setFailed((ex as Error).message);
   }

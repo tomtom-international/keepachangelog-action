@@ -72,76 +72,120 @@ export async function validate_changelog() {
 }
 
 /**
- * Creates a new DRAFT release based on the [Unreleased] tag in the
- * CHANGELOG.md file
+ * Converts the CHANGELOG to JSON object
  */
-export async function create_draft_release() {
-  await exec.getExecOutput(
-    "python3",
-    [
-      "-m",
-      "changelogmanager",
-      "github-release",
-      "--github-token",
-      github_token,
-      "--repository",
-      `${repository.owner}/${repository.repo}`,
-    ],
-    {
-      silent: true,
-    }
-  );
+async function changelog_to_json() {
+  await exec.getExecOutput("python3", ["-m", "changelogmanager", "to-json"], {
+    ignoreReturnCode: true,
+    silent: true,
+  });
+
+  return await JSON.parse(fs.readFileSync("CHANGELOG.json", "utf-8"));
 }
 
 /**
- * Retrieves the latest GitHub release from the current repository
+ * Generates one category for the GitHub Release body, i.e.:
  *
- * @returns GitHub Release object
+ * ### :warning: Deprecation
+ * * Something will be removed in the next release of...
  */
-async function get_latest_release() {
-  try {
-    return (
-      await octokit.rest.repos.getLatestRelease({
-        ...repository,
-      })
-    ).data;
-  } catch (error: any) {
-    if (error.message !== "Not Found") {
-      throw error;
+function release_entry(data: any, emoji: string, title: string) {
+  if (!data) {
+    return "";
+  }
+
+  var message = `### :${emoji}: ${title}\n`;
+  for (var item of data) {
+    message += `* ${item}\n`;
+  }
+  message += "\n";
+
+  return message;
+}
+
+/**
+ * Creates the body of a GitHub Release
+ */
+function compose_release_changelog(release: any) {
+  var body = "## What's changed\n\n";
+
+  body += release_entry(release.removed, "no_entry_sign", "Removed");
+  body += release_entry(
+    release.security,
+    "closed_lock_with_key",
+    "Security Changes"
+  );
+  body += release_entry(release.deprecated, "warning", "Deprecation");
+  body += release_entry(release.added, "rocket", "New Features");
+  body += release_entry(release.changed, "scissors", "Updated Features");
+  body += release_entry(release.fixed, "bug", "Bug Fixes");
+
+  return body;
+}
+
+/**
+ * Retrieves the latest unreleased (draft) GitHub release which
+ * uses the standard naming pattern (`Release vXYZ`)
+ */
+export async function get_unreleased_github_release(releases: string[]) {
+  const github_releases = await octokit.rest.repos.listReleases({
+    ...repository,
+  });
+  const release_version_re = /Release v(.*)/;
+
+  for (var github_release of github_releases.data) {
+    if (github_release.draft) {
+      const match = release_version_re.exec(github_release.name);
+
+      if (match && !releases.includes(match[1])) {
+        return github_release.id;
+      }
     }
-    throw new Error("No Release found");
   }
 }
 
 /**
- *
- * @param source_branch
- * @param target_branch
+ * Returns `True` when the provided version is Unreleased
  */
-async function create_update_branch_if_needed(
-  source_branch: string,
-  target_branch: string
-) {
-  const { data: latest_commit } = await octokit.rest.repos.getBranch({
-    ...repository,
-    branch: source_branch,
-  });
-
-  await octokit.rest.git
-    .createRef({
-      ...repository,
-      ref: `refs/heads/${target_branch}`,
-      sha: latest_commit.commit.sha,
-    })
-    .catch((error) => {
-      if (error.message === "Reference already exists") {
-        return;
-      }
-
-      throw error;
-    });
+function is_unreleased_version(version: any) {
+  return version && version.metadata.version === "unreleased";
 }
 
+/**
+ * Returns `True` when the CHANGELOG.md contains an Unreleased version
+ */
+export async function has_unreleased_version() {
+  const changelog = await changelog_to_json();
+  const latest_version = changelog[0];
+
+  return is_unreleased_version(latest_version);
+}
+
+/**
+ * Creates a GitHub Release for the last [Unreleased] version in
+ * the CHANGELOG.md file
+ */
+export async function create_github_release() {
+  const changelog = await changelog_to_json();
+  const latest_version = changelog[0];
+  const version = latest_version.metadata.version;
+
+  const release_metadata = {
+    name: `Release v${version}`,
+    tag_name: version,
+    body: compose_release_changelog(latest_version),
+    draft: false,
+  };
+
+  await octokit.rest.repos.createRelease({
+    ...repository,
+    ...release_metadata,
+  });
+}
+
+/**
+ * Determines the commit message layout
+ */
 function get_commit_message(version: string) {
   const commit_message_re = /\{version\}/gi;
   const commit_message = core.getInput("message");
@@ -149,6 +193,9 @@ function get_commit_message(version: string) {
   return commit_message.replace(commit_message_re, version);
 }
 
+/**
+ * Determines the default branch
+ */
 async function determine_default_branch() {
   const { data: metadata } = await octokit.rest.repos.get({
     ...repository,
@@ -161,29 +208,13 @@ async function determine_default_branch() {
  * Releases the latest GitHub release to the main branch
  */
 export async function release_changelog() {
-  try {
-    var release = await get_latest_release();
-  } catch (error: any) {
-    throw error;
-  }
-
-  await exec.getExecOutput(
-    "python3",
-    [
-      "-m",
-      "changelogmanager",
-      "release",
-      "--override-version",
-      release.tag_name,
-    ],
-    {
-      silent: true,
-    }
-  );
+  await exec.getExecOutput("python3", ["-m", "changelogmanager", "release"], {
+    silent: true,
+  });
+  const changelog = await changelog_to_json();
+  const version = changelog[0].metadata.version;
   const default_branch = await determine_default_branch();
-  const update_branch = `docs/update-changelog-for-${release.tag_name}`;
-  const commit_message = get_commit_message(release.tag_name);
-  await create_update_branch_if_needed(default_branch, update_branch);
+  const commit_message = get_commit_message(version);
 
   const updated_content = fs.readFileSync("CHANGELOG.md", {
     encoding: "utf8",
@@ -194,7 +225,7 @@ export async function release_changelog() {
     path: "CHANGELOG.md",
     message: commit_message,
     content: Buffer.from(updated_content, "utf8").toString("base64"),
-    branch: update_branch,
+    branch: default_branch,
   };
 
   try {
@@ -210,16 +241,4 @@ export async function release_changelog() {
   }
 
   await octokit.rest.repos.createOrUpdateFileContents(request);
-
-  try {
-    await octokit.rest.pulls.create({
-      ...repository,
-      head: update_branch,
-      base: default_branch,
-      title: commit_message,
-      body: release.body,
-    });
-  } catch (error: any) {
-    // Do nothing
-  }
 }
