@@ -88,7 +88,7 @@ jobs:
         with:
           python-version: '3.7'
 
-      - name: Validate Changelog
+      - name: Release Changelog
         uses: tomtom-international/keepachangelog-action
         with:
           publish: true
@@ -103,6 +103,11 @@ jobs:
 | publish | :o: | `Boolean` indicating whether to release and publish the latest `[Unreleased]` version. Executes the validation step only if this input is not provided |
 | message | :o: | Message to use while creating the Pull Request to update your CHANGELOG.md, defaults to: `docs(release): update CHANGELOG.md for {version}`
 
+## Outputs
+
+| Name | Description |
+| --- | --- |
+| version | Contains the Semantic Version of the latest release. This is only set in case `publish: true`. |
 
 
 [keepachangelog convention]: http://keepachangelog.com/

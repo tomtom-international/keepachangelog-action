@@ -36,6 +36,10 @@ inputs:
     default: 'docs(release): update CHANGELOG.md for {version}'
     required: false
 
+outputs:
+  version:
+    description: 'The version of the released CHANGELOG.md'
+
 runs:
   using: 'node16'
   main: 'dist/index.js'

@@ -48,9 +48,11 @@ async function run() {
     await release_changelog();
 
     console.log("📦 Creating a new GitHub Release...");
-    await create_github_release();
+    const released_version = await create_github_release();
 
     console.log("🚢 Published the GitHub Release!");
+
+    core.setOutput("version", released_version);
   } catch (ex) {
     core.setFailed((ex as Error).message);
   }

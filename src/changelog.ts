@@ -181,6 +181,8 @@ export async function create_github_release() {
     ...repository,
     ...release_metadata,
   });
+
+  return version;
 }
 
 /**
