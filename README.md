@@ -19,8 +19,8 @@ limitations under the License.
 This GitHub Action allows you to setup a full release workflow based around your `CHANGELOG.md`, incl:
 
 - Validation of your `CHANGELOG.md` file against the [keepachangelog convention]
-- Creation of a Draft-release based on the `[Unreleased]` version in your `CHANGELOG.md`
 - Releasing the `[Unreleased]` version in your `CHANGELOG.md`
+- Publication of a GitHub Release, associated with the previously released version
 
 ## Prerequisites
 
@@ -37,7 +37,6 @@ You can use the following workflow syntax to validate your CHANGELOG.md:
 name: Quality Checks
 on:
   pull_request:
-    types: [edited, opened, synchronize, reopened]
 
 jobs:
   changelog:
@@ -47,53 +46,24 @@ jobs:
     steps:
       - name: Setup Python v3.7
         uses: actions/setup-python@v3
-        with: {python-version: '3.7'}
+        with:
+          python-version: '3.7'
 
       - name: Validate Changelog
         uses: tomtom-international/keepachangelog-action
-        with: {token: ${{ github.token }}}
+        with:
+          token: ${{ github.token }}
 ```
 
 > :bulb: *Any non-conformity will automatically appear as file annotation in your Pull Request*
 
-### Create a DRAFT release
 
-This action can automatically manage your draft releases, by creating a new release upon merge to your
-main branch. An example workflow:
+### Release your CHANGELOG.md
 
-```yml
-name: Create Draft release based on the CHANGELOG.md
-concurrency: deployment
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  changelog:
-    name: Update draft releases
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Setup Python v3.7
-        uses: actions/setup-python@v3
-        with:
-          python-version: '3.7'
-
-      - name: Update DRAFT releases based on your CHANGELOG.md
-        uses: tomtom-international/keepachangelog-action
-        with:
-          deploy: draft
-          token: ${{ github.token }}
-```
-
-> :warning: *This will DELETE all your current DRAFT releases and only create a new DRAFT release in case an `[Unreleased]` version exists*
-
-### Release a DRAFT release
-
-This action provides the ability to automatically create a Pull Request to update your
-CHANGELOG.md according to the latest GitHub release.
+This action provides the ability to automatically release the contents of the `[Unreleased]` version.
+As result:
+- Your `CHANGELOG.md` is automatically updated and pushed to your main branch
+- A GitHub Release is created on the commit hash of the previous update commit.
 
 Example workflow:
 
@@ -103,11 +73,12 @@ name: Release Changelog
 concurrency: deployment
 
 on:
-  release:
-    types: [released]
+  push:
+    branches:
+      - main
 
 jobs:
-  update-changelog:
+  release-changelog:
     name: Release Changelog
     runs-on: ubuntu-latest
 
@@ -120,7 +91,7 @@ jobs:
       - name: Validate Changelog
         uses: tomtom-international/keepachangelog-action
         with:
-          deploy: release
+          publish: true
           token: ${{ github.token }}
 ```
 
@@ -129,7 +100,7 @@ jobs:
 | Name | Required | Description |
 | --- | --- | --- |
 | token | :white_check_mark: | GitHub token used to access GitHub (eg. github.token) |
-| deploy | :o: | Deployment type (`draft` or `release`) to execute. Executes the validation step only if this input is not provided |
+| publish | :o: | `Boolean` indicating whether to release and publish the latest `[Unreleased]` version. Executes the validation step only if this input is not provided |
 | message | :o: | Message to use while creating the Pull Request to update your CHANGELOG.md, defaults to: `docs(release): update CHANGELOG.md for {version}`
 
 

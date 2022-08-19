@@ -5,8 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
-### Changed
-- Management of GitHub Releases is now handled by this action iso its dependency
+### Added
+- Ability to publish your CHANGELOG.md directly to your main branch (input option `publish`), before creating/updating a GitHub Release
+
+### Fixed
+- This GitHub action no longer deletes all `DRAFT` GitHub Releases 
+
+### Removed
+- Support for releasing your CHANGELOG.md using Pull Requests (incl. the `deploy` input parameter)
 
 ## [0.0.4] - 2022-07-20
 ### Changed
