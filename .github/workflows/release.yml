@@ -38,7 +38,7 @@ jobs:
       - name: Release Changelog
         uses: ./
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.RELEASE_TOKEN }}
           publish: true
           
 
