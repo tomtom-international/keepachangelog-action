@@ -33,7 +33,7 @@ inputs:
 
   tag:
     description: '(Optional) Tag format'
-    default: 'v{version}'
+    default: '{version}'
     required: false
 
   release-name:
