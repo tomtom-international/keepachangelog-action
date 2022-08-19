@@ -141,7 +141,7 @@ export async function has_unreleased_version() {
 }
 
 /**
- * Format the version name
+ * Format the Tag name
  */
 function format_tag(version: string) {
   const version_re = /\{version\}/gi;
@@ -177,9 +177,7 @@ function format_commit_message(release_name: string) {
 export async function create_github_release() {
   const changelog = await changelog_to_json();
   const latest_version = changelog[0];
-  console.log(latest_version.metadata.version);
   const tag = format_tag(latest_version.metadata.version);
-  console.log(tag);
 
   const release_metadata = {
     name: format_github_release_name(tag),

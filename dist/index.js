@@ -10820,7 +10820,7 @@ function has_unreleased_version() {
 }
 exports.has_unreleased_version = has_unreleased_version;
 /**
- * Format the version name
+ * Format the Tag name
  */
 function format_tag(version) {
     const version_re = /\{version\}/gi;
@@ -10851,9 +10851,7 @@ function create_github_release() {
     return __awaiter(this, void 0, void 0, function* () {
         const changelog = yield changelog_to_json();
         const latest_version = changelog[0];
-        console.log(latest_version.metadata.version);
         const tag = format_tag(latest_version.metadata.version);
-        console.log(tag);
         const release_metadata = {
             name: format_github_release_name(tag),
             tag_name: tag,
