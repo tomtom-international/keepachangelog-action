@@ -124,27 +124,6 @@ function compose_release_changelog(release: any) {
 }
 
 /**
- * Retrieves the latest unreleased (draft) GitHub release which
- * uses the standard naming pattern (`Release vXYZ`)
- */
-export async function get_unreleased_github_release(releases: string[]) {
-  const github_releases = await octokit.rest.repos.listReleases({
-    ...repository,
-  });
-  const release_version_re = /Release v(.*)/;
-
-  for (var github_release of github_releases.data) {
-    if (github_release.draft) {
-      const match = release_version_re.exec(github_release.name);
-
-      if (match && !releases.includes(match[1])) {
-        return github_release.id;
-      }
-    }
-  }
-}
-
-/**
  * Returns `True` when the provided version is Unreleased
  */
 function is_unreleased_version(version: any) {
@@ -162,17 +141,49 @@ export async function has_unreleased_version() {
 }
 
 /**
+ * Format the version name
+ */
+function format_tag(version: string) {
+  const version_re = /\{version\}/gi;
+  const version_format = core.getInput("tag");
+
+  return version_format.replace(version_re, version);
+}
+
+/**
+ * Formats the GitHub Release name
+ */
+function format_github_release_name(tag: string) {
+  const github_release_name_re = /\{tag\}/gi;
+  const github_release_name = core.getInput("release-name");
+
+  return github_release_name.replace(github_release_name_re, tag);
+}
+
+/**
+ * Formats the commit message
+ */
+function format_commit_message(release_name: string) {
+  const commit_message_re = /\{release-name\}/gi;
+  const commit_message = core.getInput("commit-message");
+
+  return commit_message.replace(commit_message_re, release_name);
+}
+
+/**
  * Creates a GitHub Release for the last [Unreleased] version in
  * the CHANGELOG.md file
  */
 export async function create_github_release() {
   const changelog = await changelog_to_json();
   const latest_version = changelog[0];
-  const version = latest_version.metadata.version;
+  console.log(latest_version.metadata.version);
+  const tag = format_tag(latest_version.metadata.version);
+  console.log(tag);
 
   const release_metadata = {
-    name: `Release v${version}`,
-    tag_name: version,
+    name: format_github_release_name(tag),
+    tag_name: tag,
     body: compose_release_changelog(latest_version),
     draft: false,
   };
@@ -182,17 +193,7 @@ export async function create_github_release() {
     ...release_metadata,
   });
 
-  return version;
-}
-
-/**
- * Determines the commit message layout
- */
-function get_commit_message(version: string) {
-  const commit_message_re = /\{version\}/gi;
-  const commit_message = core.getInput("message");
-
-  return commit_message.replace(commit_message_re, version);
+  return tag;
 }
 
 /**
@@ -216,7 +217,9 @@ export async function release_changelog() {
   const changelog = await changelog_to_json();
   const version = changelog[0].metadata.version;
   const default_branch = await determine_default_branch();
-  const commit_message = get_commit_message(version);
+  const commit_message = format_commit_message(
+    format_github_release_name(format_tag(version))
+  );
 
   const updated_content = fs.readFileSync("CHANGELOG.md", {
     encoding: "utf8",

@@ -31,8 +31,18 @@ inputs:
     default: false
     required: false
 
-  message:
-    description: '(Optional) Commit message'
+  tag:
+    description: '(Optional) Tag format'
+    default: '{version}'
+    required: false
+
+  release-name:
+    description: '(Optional) GitHub Release format'
+    default: 'Release {version}'
+    required: false
+
+  commit-message:
+    description: '(Optional) Commit message format'
     default: 'docs(release): update CHANGELOG.md for {version}'
     required: false
 

@@ -51,7 +51,6 @@ async function run() {
     const released_version = await create_github_release();
 
     console.log("🚢 Published the GitHub Release!");
-
     core.setOutput("version", released_version);
   } catch (ex) {
     core.setFailed((ex as Error).message);

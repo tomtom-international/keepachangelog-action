@@ -101,7 +101,9 @@ jobs:
 | --- | --- | --- |
 | token | :white_check_mark: | GitHub token used to access GitHub (eg. github.token) |
 | publish | :o: | `Boolean` indicating whether to release and publish the latest `[Unreleased]` version. Executes the validation step only if this input is not provided |
-| message | :o: | Message to use while creating the Pull Request to update your CHANGELOG.md, defaults to: `docs(release): update CHANGELOG.md for {version}`
+| tag | :o: | Formatter used for applying the tag name, defaults to: `{version}`
+| release-name | :o: | Formatter used for applying the GitHub Release name, defaults to: `Release {tag}`
+| commit-message | :o: | Message to use while creating the Pull Request to update your CHANGELOG.md, defaults to: `docs(release): update CHANGELOG.md for {release-name}`
 
 ## Outputs
 

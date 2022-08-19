@@ -10714,7 +10714,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.release_changelog = exports.create_github_release = exports.has_unreleased_version = exports.get_unreleased_github_release = exports.validate_changelog = exports.retrieve_changelog = void 0;
+exports.release_changelog = exports.create_github_release = exports.has_unreleased_version = exports.validate_changelog = exports.retrieve_changelog = void 0;
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
 const github = __nccwpck_require__(5438);
@@ -10803,25 +10803,6 @@ function compose_release_changelog(release) {
     return body;
 }
 /**
- * Retrieves the latest unreleased (draft) GitHub release which
- * uses the standard naming pattern (`Release vXYZ`)
- */
-function get_unreleased_github_release(releases) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const github_releases = yield octokit.rest.repos.listReleases(Object.assign({}, repository));
-        const release_version_re = /Release v(.*)/;
-        for (var github_release of github_releases.data) {
-            if (github_release.draft) {
-                const match = release_version_re.exec(github_release.name);
-                if (match && !releases.includes(match[1])) {
-                    return github_release.id;
-                }
-            }
-        }
-    });
-}
-exports.get_unreleased_github_release = get_unreleased_github_release;
-/**
  * Returns `True` when the provided version is Unreleased
  */
 function is_unreleased_version(version) {
@@ -10839,6 +10820,30 @@ function has_unreleased_version() {
 }
 exports.has_unreleased_version = has_unreleased_version;
 /**
+ * Format the version name
+ */
+function format_tag(version) {
+    const version_re = /\{version\}/gi;
+    const version_format = core.getInput("tag");
+    return version_format.replace(version_re, version);
+}
+/**
+ * Formats the GitHub Release name
+ */
+function format_github_release_name(tag) {
+    const github_release_name_re = /\{tag\}/gi;
+    const github_release_name = core.getInput("release-name");
+    return github_release_name.replace(github_release_name_re, tag);
+}
+/**
+ * Formats the commit message
+ */
+function format_commit_message(release_name) {
+    const commit_message_re = /\{release-name\}/gi;
+    const commit_message = core.getInput("commit-message");
+    return commit_message.replace(commit_message_re, release_name);
+}
+/**
  * Creates a GitHub Release for the last [Unreleased] version in
  * the CHANGELOG.md file
  */
@@ -10846,26 +10851,20 @@ function create_github_release() {
     return __awaiter(this, void 0, void 0, function* () {
         const changelog = yield changelog_to_json();
         const latest_version = changelog[0];
-        const version = latest_version.metadata.version;
+        console.log(latest_version.metadata.version);
+        const tag = format_tag(latest_version.metadata.version);
+        console.log(tag);
         const release_metadata = {
-            name: `Release v${version}`,
-            tag_name: version,
+            name: format_github_release_name(tag),
+            tag_name: tag,
             body: compose_release_changelog(latest_version),
             draft: false,
         };
         yield octokit.rest.repos.createRelease(Object.assign(Object.assign({}, repository), release_metadata));
-        return version;
+        return tag;
     });
 }
 exports.create_github_release = create_github_release;
-/**
- * Determines the commit message layout
- */
-function get_commit_message(version) {
-    const commit_message_re = /\{version\}/gi;
-    const commit_message = core.getInput("message");
-    return commit_message.replace(commit_message_re, version);
-}
 /**
  * Determines the default branch
  */
@@ -10886,7 +10885,7 @@ function release_changelog() {
         const changelog = yield changelog_to_json();
         const version = changelog[0].metadata.version;
         const default_branch = yield determine_default_branch();
-        const commit_message = get_commit_message(version);
+        const commit_message = format_commit_message(format_github_release_name(format_tag(version)));
         const updated_content = fs.readFileSync("CHANGELOG.md", {
             encoding: "utf8",
             flag: "r",

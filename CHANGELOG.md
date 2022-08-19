@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- You can now format the external representation of your tag (`tag`-input) and GitHub Release name (`release-name`)
+
+### Changed
+- In order to remain consistent, we have renamed the `message` input to `commit-message`
+
 ## [1.1.0] - 2022-08-19
 ### Added
 - The semantic version of the latest published release can be retrieved with the `version` output parameter
