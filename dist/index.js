@@ -10854,6 +10854,7 @@ function create_github_release() {
             draft: false,
         };
         yield octokit.rest.repos.createRelease(Object.assign(Object.assign({}, repository), release_metadata));
+        return version;
     });
 }
 exports.create_github_release = create_github_release;
@@ -11062,8 +11063,9 @@ function run() {
             console.log("🏁 Releasing your CHANGELOG.md");
             yield (0, changelog_1.release_changelog)();
             console.log("📦 Creating a new GitHub Release...");
-            yield (0, changelog_1.create_github_release)();
+            const released_version = yield (0, changelog_1.create_github_release)();
             console.log("🚢 Published the GitHub Release!");
+            core.setOutput("version", released_version);
         }
         catch (ex) {
             core.setFailed(ex.message);
