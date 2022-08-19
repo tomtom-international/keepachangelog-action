@@ -41,6 +41,7 @@ jobs:
         uses: ./
         id: keepachangelog
         with:
+          tag: v{version}
           token: ${{ secrets.RELEASE_TOKEN }}
           publish: true
           
