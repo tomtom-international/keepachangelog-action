@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: 'Keepachangelog-manager'
+name: 'Keepachangelog Manager'
 author: 'Kevin de Jong'
 description: >
   Setup a release workflow based around your `CHANGELOG.md`
