@@ -75,7 +75,6 @@ export async function validate_changelog() {
     ],
     {
       ignoreReturnCode: true,
-      silent: true,
     }
   );
 
@@ -102,7 +101,6 @@ async function changelog_to_json() {
     ],
     {
       ignoreReturnCode: true,
-      silent: true,
     }
   );
 
@@ -237,19 +235,13 @@ async function determine_default_branch() {
  * Releases the latest GitHub release to the main branch
  */
 export async function release_changelog() {
-  await exec.getExecOutput(
-    "python3",
-    [
-      "-m",
-      "changelogmanager",
-      "--input-file",
-      determineChangelogLocation(),
-      "release",
-    ],
-    {
-      silent: true,
-    }
-  );
+  await exec.getExecOutput("python3", [
+    "-m",
+    "changelogmanager",
+    "--input-file",
+    determineChangelogLocation(),
+    "release",
+  ]);
   const changelog = await changelog_to_json();
   const version = changelog[0].metadata.version;
   const default_branch = await determine_default_branch();

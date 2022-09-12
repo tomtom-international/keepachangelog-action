@@ -10766,7 +10766,6 @@ function validate_changelog() {
             "validate",
         ], {
             ignoreReturnCode: true,
-            silent: true,
         });
         if (status !== 0) {
             console.log(errors);
@@ -10788,7 +10787,6 @@ function changelog_to_json() {
             "to-json",
         ], {
             ignoreReturnCode: true,
-            silent: true,
         });
         return yield JSON.parse(fs.readFileSync(determineChangelogLocation(), "utf-8"));
     });
@@ -10904,9 +10902,7 @@ function release_changelog() {
             "--input-file",
             determineChangelogLocation(),
             "release",
-        ], {
-            silent: true,
-        });
+        ]);
         const changelog = yield changelog_to_json();
         const version = changelog[0].metadata.version;
         const default_branch = yield determine_default_branch();
