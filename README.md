@@ -100,6 +100,7 @@ jobs:
 | Name | Required | Description |
 | --- | --- | --- |
 | token | :white_check_mark: | GitHub token used to access GitHub (eg. github.token) |
+| path | :o: | Full path towards the CHANGELOG.md file |
 | publish | :o: | `Boolean` indicating whether to release and publish the latest `[Unreleased]` version. Executes the validation step only if this input is not provided |
 | tag | :o: | Formatter used for applying the tag name, defaults to: `{version}`
 | release-name | :o: | Formatter used for applying the GitHub Release name, defaults to: `Release {tag}`

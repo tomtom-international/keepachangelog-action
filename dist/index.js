@@ -10721,6 +10721,12 @@ const github = __nccwpck_require__(5438);
 const fs = __nccwpck_require__(7147);
 const github_token = core.getInput("token");
 const octokit = github.getOctokit(github_token);
+/**
+ * Determines the location of the CHANGELOG file
+ */
+function determineChangelogLocation() {
+    return core.getInput() || "CHANGELOG.md";
+}
 const [owner, repo] = (process.env.GITHUB_REPOSITORY || "").split("/");
 const repository = {
     owner: owner,
@@ -10732,9 +10738,10 @@ const repository = {
 function retrieve_changelog() {
     return __awaiter(this, void 0, void 0, function* () {
         const ref = process.env.GITHUB_REF;
+        const location = determineChangelogLocation();
         try {
-            const { data: changelog } = yield octokit.rest.repos.getContent(Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md", ref: ref }));
-            fs.writeFileSync("CHANGELOG.md", Buffer.from(changelog.content, "base64"));
+            const { data: changelog } = yield octokit.rest.repos.getContent(Object.assign(Object.assign({}, repository), { path: location, ref: ref }));
+            fs.writeFileSync(location, Buffer.from(changelog.content, "base64"));
         }
         catch (error) {
             if (error.message === "Not Found") {
@@ -10749,7 +10756,15 @@ exports.retrieve_changelog = retrieve_changelog;
  */
 function validate_changelog() {
     return __awaiter(this, void 0, void 0, function* () {
-        const { exitCode: status, stderr: errors } = yield exec.getExecOutput("python3", ["-m", "changelogmanager", "--error-format", "github", "validate"], {
+        const { exitCode: status, stderr: errors } = yield exec.getExecOutput("python3", [
+            "-m",
+            "changelogmanager",
+            "--input-file",
+            determineChangelogLocation(),
+            "--error-format",
+            "github",
+            "validate",
+        ], {
             ignoreReturnCode: true,
             silent: true,
         });
@@ -10765,11 +10780,17 @@ exports.validate_changelog = validate_changelog;
  */
 function changelog_to_json() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exec.getExecOutput("python3", ["-m", "changelogmanager", "to-json"], {
+        yield exec.getExecOutput("python3", [
+            "-m",
+            "changelogmanager",
+            "--input-file",
+            determineChangelogLocation(),
+            "to-json",
+        ], {
             ignoreReturnCode: true,
             silent: true,
         });
-        return yield JSON.parse(fs.readFileSync("CHANGELOG.json", "utf-8"));
+        return yield JSON.parse(fs.readFileSync(determineChangelogLocation(), "utf-8"));
     });
 }
 /**
@@ -10877,20 +10898,27 @@ function determine_default_branch() {
  */
 function release_changelog() {
     return __awaiter(this, void 0, void 0, function* () {
-        yield exec.getExecOutput("python3", ["-m", "changelogmanager", "release"], {
+        yield exec.getExecOutput("python3", [
+            "-m",
+            "changelogmanager",
+            "--input-file",
+            determineChangelogLocation(),
+            "release",
+        ], {
             silent: true,
         });
         const changelog = yield changelog_to_json();
         const version = changelog[0].metadata.version;
         const default_branch = yield determine_default_branch();
         const commit_message = format_commit_message(format_github_release_name(format_tag(version)));
-        const updated_content = fs.readFileSync("CHANGELOG.md", {
+        const location = determineChangelogLocation();
+        const updated_content = fs.readFileSync(location, {
             encoding: "utf8",
             flag: "r",
         });
-        let request = Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md", message: commit_message, content: Buffer.from(updated_content, "utf8").toString("base64"), branch: default_branch });
+        let request = Object.assign(Object.assign({}, repository), { path: location, message: commit_message, content: Buffer.from(updated_content, "utf8").toString("base64"), branch: default_branch });
         try {
-            const { data: changelog } = yield octokit.rest.repos.getContent(Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md" }));
+            const { data: changelog } = yield octokit.rest.repos.getContent(Object.assign(Object.assign({}, repository), { path: location }));
             request["sha"] = changelog.sha;
         }
         catch (error) {

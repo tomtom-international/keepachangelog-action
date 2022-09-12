@@ -22,6 +22,13 @@ const fs = require("fs");
 const github_token = core.getInput("token");
 const octokit = github.getOctokit(github_token);
 
+/**
+ * Determines the location of the CHANGELOG file
+ */
+function determineChangelogLocation() {
+  return core.getInput() || "CHANGELOG.md";
+}
+
 const [owner, repo] = (process.env.GITHUB_REPOSITORY || "").split("/");
 const repository = {
   owner: owner,
@@ -33,14 +40,15 @@ const repository = {
  */
 export async function retrieve_changelog() {
   const ref = process.env.GITHUB_REF;
+  const location = determineChangelogLocation();
   try {
     const { data: changelog } = await octokit.rest.repos.getContent({
       ...repository,
-      path: "CHANGELOG.md",
+      path: location,
       ref: ref,
     });
 
-    fs.writeFileSync("CHANGELOG.md", Buffer.from(changelog.content, "base64"));
+    fs.writeFileSync(location, Buffer.from(changelog.content, "base64"));
   } catch (error: any) {
     if (error.message === "Not Found") {
       throw new Error(
@@ -56,7 +64,15 @@ export async function retrieve_changelog() {
 export async function validate_changelog() {
   const { exitCode: status, stderr: errors } = await exec.getExecOutput(
     "python3",
-    ["-m", "changelogmanager", "--error-format", "github", "validate"],
+    [
+      "-m",
+      "changelogmanager",
+      "--input-file",
+      determineChangelogLocation(),
+      "--error-format",
+      "github",
+      "validate",
+    ],
     {
       ignoreReturnCode: true,
       silent: true,
@@ -75,12 +91,24 @@ export async function validate_changelog() {
  * Converts the CHANGELOG to JSON object
  */
 async function changelog_to_json() {
-  await exec.getExecOutput("python3", ["-m", "changelogmanager", "to-json"], {
-    ignoreReturnCode: true,
-    silent: true,
-  });
+  await exec.getExecOutput(
+    "python3",
+    [
+      "-m",
+      "changelogmanager",
+      "--input-file",
+      determineChangelogLocation(),
+      "to-json",
+    ],
+    {
+      ignoreReturnCode: true,
+      silent: true,
+    }
+  );
 
-  return await JSON.parse(fs.readFileSync("CHANGELOG.json", "utf-8"));
+  return await JSON.parse(
+    fs.readFileSync(determineChangelogLocation(), "utf-8")
+  );
 }
 
 /**
@@ -209,23 +237,34 @@ async function determine_default_branch() {
  * Releases the latest GitHub release to the main branch
  */
 export async function release_changelog() {
-  await exec.getExecOutput("python3", ["-m", "changelogmanager", "release"], {
-    silent: true,
-  });
+  await exec.getExecOutput(
+    "python3",
+    [
+      "-m",
+      "changelogmanager",
+      "--input-file",
+      determineChangelogLocation(),
+      "release",
+    ],
+    {
+      silent: true,
+    }
+  );
   const changelog = await changelog_to_json();
   const version = changelog[0].metadata.version;
   const default_branch = await determine_default_branch();
   const commit_message = format_commit_message(
     format_github_release_name(format_tag(version))
   );
+  const location = determineChangelogLocation();
 
-  const updated_content = fs.readFileSync("CHANGELOG.md", {
+  const updated_content = fs.readFileSync(location, {
     encoding: "utf8",
     flag: "r",
   });
   let request = {
     ...repository,
-    path: "CHANGELOG.md",
+    path: location,
     message: commit_message,
     content: Buffer.from(updated_content, "utf8").toString("base64"),
     branch: default_branch,
@@ -234,7 +273,7 @@ export async function release_changelog() {
   try {
     const { data: changelog } = await octokit.rest.repos.getContent({
       ...repository,
-      path: "CHANGELOG.md",
+      path: location,
     });
     request["sha"] = changelog.sha;
   } catch (error: any) {

@@ -31,6 +31,10 @@ inputs:
     default: false
     required: false
 
+  path:
+    description: Path containing the CHANGELOG.md file
+    required: false
+
   tag:
     description: '(Optional) Tag format'
     default: '{version}'
