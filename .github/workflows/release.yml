@@ -58,6 +58,6 @@ jobs:
           ref: ${{ needs.update-changelog.outputs.version }}
         
       - name: Update the ${{ needs.update-changelog.outputs.version }} tag
-        uses: actions/publish-action@v0.2.0
+        uses: actions/publish-action@v0.2.1
         with:
           source-tag: ${{ needs.update-changelog.outputs.version }}
