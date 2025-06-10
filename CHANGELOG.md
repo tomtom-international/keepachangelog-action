@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-06-10
+### Removed
+- Removed support for Node16
+
+### Added
+- Added Support for Node20
+
+### Security
+- Upgrade `@actions/github` to address security concerns (CVE-2025-25290, CVE-2025-25288, CVE-2025-25289)
+
 ## [1.2.1] - 2022-09-01
 ### Changed
 - Renamed action to `Keepachangelog Manager`
