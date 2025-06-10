@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Added
+- Upgraded keepachangelog-manager to v4
+
 ## [2.0.0] - 2025-06-10
 ### Removed
 - Removed support for Node16
@@ -56,4 +60,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation of the CHANGELOG.md based on keepachangelog convention
 - Ability to create/update a draft GitHub release based on the CHANGELOG.md
 - Allow releasing (using PRs) of the CHANGELOG.md
-
