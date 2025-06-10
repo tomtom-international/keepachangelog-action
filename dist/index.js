@@ -29952,7 +29952,7 @@ function wrappy (fn, cb) {
 /***/ }),
 
 /***/ 8598:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+/***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
 "use strict";
 
@@ -29971,17 +29971,12 @@ function wrappy (fn, cb) {
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.release_changelog = exports.create_github_release = exports.has_unreleased_version = exports.validate_changelog = exports.retrieve_changelog = void 0;
+exports.retrieve_changelog = retrieve_changelog;
+exports.validate_changelog = validate_changelog;
+exports.has_unreleased_version = has_unreleased_version;
+exports.create_github_release = create_github_release;
+exports.release_changelog = release_changelog;
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
 const github = __nccwpck_require__(5438);
@@ -29996,48 +29991,44 @@ const repository = {
 /**
  * Retrieves the CHANGELOG.md from the current repository
  */
-function retrieve_changelog() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const ref = process.env.GITHUB_REF;
-        try {
-            const { data: changelog } = yield octokit.rest.repos.getContent(Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md", ref: ref }));
-            fs.writeFileSync("CHANGELOG.md", Buffer.from(changelog.content, "base64"));
+async function retrieve_changelog() {
+    const ref = process.env.GITHUB_REF;
+    try {
+        const { data: changelog } = await octokit.rest.repos.getContent({
+            ...repository,
+            path: "CHANGELOG.md",
+            ref: ref,
+        });
+        fs.writeFileSync("CHANGELOG.md", Buffer.from(changelog.content, "base64"));
+    }
+    catch (error) {
+        if (error.message === "Not Found") {
+            throw new Error(`No CHANGELOG.md found for ${repository.owner}/${repository.repo}@${ref}`);
         }
-        catch (error) {
-            if (error.message === "Not Found") {
-                throw new Error(`No CHANGELOG.md found for ${repository.owner}/${repository.repo}@${ref}`);
-            }
-        }
-    });
+    }
 }
-exports.retrieve_changelog = retrieve_changelog;
 /**
  * Validates the CHANGELOG.md against the keepachangelog convention
  */
-function validate_changelog() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { exitCode: status, stderr: errors } = yield exec.getExecOutput("python3", ["-m", "changelogmanager", "--error-format", "github", "validate"], {
-            ignoreReturnCode: true,
-            silent: true,
-        });
-        if (status !== 0) {
-            console.log(errors);
-            throw new Error(`Your CHANGELOG.md does not comply to the keepachangelog convention`);
-        }
+async function validate_changelog() {
+    const { exitCode: status, stderr: errors } = await exec.getExecOutput("python3", ["-m", "changelogmanager", "--error-format", "github", "validate"], {
+        ignoreReturnCode: true,
+        silent: true,
     });
+    if (status !== 0) {
+        console.log(errors);
+        throw new Error(`Your CHANGELOG.md does not comply to the keepachangelog convention`);
+    }
 }
-exports.validate_changelog = validate_changelog;
 /**
  * Converts the CHANGELOG to JSON object
  */
-function changelog_to_json() {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec.getExecOutput("python3", ["-m", "changelogmanager", "to-json"], {
-            ignoreReturnCode: true,
-            silent: true,
-        });
-        return yield JSON.parse(fs.readFileSync("CHANGELOG.json", "utf-8"));
+async function changelog_to_json() {
+    await exec.getExecOutput("python3", ["-m", "changelogmanager", "to-json"], {
+        ignoreReturnCode: true,
+        silent: true,
     });
+    return await JSON.parse(fs.readFileSync("CHANGELOG.json", "utf-8"));
 }
 /**
  * Generates one category for the GitHub Release body, i.e.:
@@ -30078,14 +30069,11 @@ function is_unreleased_version(version) {
 /**
  * Returns `True` when the CHANGELOG.md contains an Unreleased version
  */
-function has_unreleased_version() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const changelog = yield changelog_to_json();
-        const latest_version = changelog[0];
-        return is_unreleased_version(latest_version);
-    });
+async function has_unreleased_version() {
+    const changelog = await changelog_to_json();
+    const latest_version = changelog[0];
+    return is_unreleased_version(latest_version);
 }
-exports.has_unreleased_version = has_unreleased_version;
 /**
  * Format the Tag name
  */
@@ -30114,61 +30102,67 @@ function format_commit_message(release_name) {
  * Creates a GitHub Release for the last [Unreleased] version in
  * the CHANGELOG.md file
  */
-function create_github_release() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const changelog = yield changelog_to_json();
-        const latest_version = changelog[0];
-        const tag = format_tag(latest_version.metadata.version);
-        const release_metadata = {
-            name: format_github_release_name(tag),
-            tag_name: tag,
-            body: compose_release_changelog(latest_version),
-            draft: false,
-        };
-        yield octokit.rest.repos.createRelease(Object.assign(Object.assign({}, repository), release_metadata));
-        return tag;
+async function create_github_release() {
+    const changelog = await changelog_to_json();
+    const latest_version = changelog[0];
+    const tag = format_tag(latest_version.metadata.version);
+    const release_metadata = {
+        name: format_github_release_name(tag),
+        tag_name: tag,
+        body: compose_release_changelog(latest_version),
+        draft: false,
+    };
+    await octokit.rest.repos.createRelease({
+        ...repository,
+        ...release_metadata,
     });
+    return tag;
 }
-exports.create_github_release = create_github_release;
 /**
  * Determines the default branch
  */
-function determine_default_branch() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const { data: metadata } = yield octokit.rest.repos.get(Object.assign({}, repository));
-        return metadata.default_branch;
+async function determine_default_branch() {
+    const { data: metadata } = await octokit.rest.repos.get({
+        ...repository,
     });
+    return metadata.default_branch;
 }
 /**
  * Releases the latest GitHub release to the main branch
  */
-function release_changelog() {
-    return __awaiter(this, void 0, void 0, function* () {
-        yield exec.getExecOutput("python3", ["-m", "changelogmanager", "release"], {
-            silent: true,
-        });
-        const changelog = yield changelog_to_json();
-        const version = changelog[0].metadata.version;
-        const default_branch = yield determine_default_branch();
-        const commit_message = format_commit_message(format_github_release_name(format_tag(version)));
-        const updated_content = fs.readFileSync("CHANGELOG.md", {
-            encoding: "utf8",
-            flag: "r",
-        });
-        let request = Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md", message: commit_message, content: Buffer.from(updated_content, "utf8").toString("base64"), branch: default_branch });
-        try {
-            const { data: changelog } = yield octokit.rest.repos.getContent(Object.assign(Object.assign({}, repository), { path: "CHANGELOG.md" }));
-            request["sha"] = changelog.sha;
-        }
-        catch (error) {
-            if (error.message !== "Not Found") {
-                throw error;
-            }
-        }
-        yield octokit.rest.repos.createOrUpdateFileContents(request);
+async function release_changelog() {
+    await exec.getExecOutput("python3", ["-m", "changelogmanager", "release"], {
+        silent: true,
     });
+    const changelog = await changelog_to_json();
+    const version = changelog[0].metadata.version;
+    const default_branch = await determine_default_branch();
+    const commit_message = format_commit_message(format_github_release_name(format_tag(version)));
+    const updated_content = fs.readFileSync("CHANGELOG.md", {
+        encoding: "utf8",
+        flag: "r",
+    });
+    let request = {
+        ...repository,
+        path: "CHANGELOG.md",
+        message: commit_message,
+        content: Buffer.from(updated_content, "utf8").toString("base64"),
+        branch: default_branch,
+    };
+    try {
+        const { data: changelog } = await octokit.rest.repos.getContent({
+            ...repository,
+            path: "CHANGELOG.md",
+        });
+        request["sha"] = changelog.sha;
+    }
+    catch (error) {
+        if (error.message !== "Not Found") {
+            throw error;
+        }
+    }
+    await octokit.rest.repos.createOrUpdateFileContents(request);
 }
-exports.release_changelog = release_changelog;
 
 
 /***/ }),
@@ -30209,24 +30203,25 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.prepare_environment = void 0;
+exports.prepare_environment = prepare_environment;
 const exec = __nccwpck_require__(1514);
 const path = __importStar(__nccwpck_require__(1017));
 /**
@@ -30235,108 +30230,39 @@ const path = __importStar(__nccwpck_require__(1017));
  * @param major Major version
  * @param minor Minor version
  */
-function check_python_prerequisites(major, minor) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const python_version_re = /Python\s*(\d+)\.(\d+)\.(\d+)/;
-        const { stdout: python_version } = yield exec.getExecOutput("python3", ["--version"], { silent: true });
-        const match = python_version_re.exec(python_version);
-        if (!match || match.length != 4) {
-            throw new Error("Unable to determine the installed Python version.");
-        }
-        if (!(parseInt(match[1]) == major && parseInt(match[2]) >= minor)) {
-            throw new Error(`Incorrect Python version installed; found ${match[1]}.${match[2]}.${match[3]}, expected >= ${major}.${minor}.0`);
-        }
-        try {
-            const { stdout: pip_version } = yield exec.getExecOutput("python3", ["-m", "pip", "--version"], { silent: true });
-        }
-        catch (_a) {
-            throw new Error("Unable to determine the installed Pip version.");
-        }
-    });
+async function check_python_prerequisites(major, minor) {
+    const python_version_re = /Python\s*(\d+)\.(\d+)\.(\d+)/;
+    const { stdout: python_version } = await exec.getExecOutput("python3", ["--version"], { silent: true });
+    const match = python_version_re.exec(python_version);
+    if (!match || match.length != 4) {
+        throw new Error("Unable to determine the installed Python version.");
+    }
+    if (!(parseInt(match[1]) == major && parseInt(match[2]) >= minor)) {
+        throw new Error(`Incorrect Python version installed; found ${match[1]}.${match[2]}.${match[3]}, expected >= ${major}.${minor}.0`);
+    }
+    try {
+        const { stdout: _ } = await exec.getExecOutput("python3", ["-m", "pip", "--version"], { silent: true });
+    }
+    catch {
+        throw new Error("Unable to determine the installed Pip version.");
+    }
 }
 /**
  * Prepares the environment for using keepachangelog-manager
  */
-function prepare_environment() {
-    return __awaiter(this, void 0, void 0, function* () {
-        // Ensure Python (>= 3.7) and pip are installed
-        yield check_python_prerequisites(3, 7);
-        // Install latest version of keepachangelog-manager
-        yield exec.exec("python3", [
-            "-m",
-            "pip",
-            "install",
-            "--upgrade",
-            "--requirement",
-            path.join(__dirname, "requirements.txt"),
-        ], { silent: true });
-    });
+async function prepare_environment() {
+    // Ensure Python (>= 3.7) and pip are installed
+    await check_python_prerequisites(3, 7);
+    // Install latest version of keepachangelog-manager
+    await exec.exec("python3", [
+        "-m",
+        "pip",
+        "install",
+        "--upgrade",
+        "--requirement",
+        path.join(__dirname, "requirements.txt"),
+    ], { silent: true });
 }
-exports.prepare_environment = prepare_environment;
-
-
-/***/ }),
-
-/***/ 399:
-/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
-
-"use strict";
-
-/**
- * Copyright (C) 2020-2022, TomTom (http://tomtom.com).
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-const core = __nccwpck_require__(2186);
-const environment_1 = __nccwpck_require__(6869);
-const changelog_1 = __nccwpck_require__(8598);
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        try {
-            console.log("🌲 Preparing environment...");
-            yield (0, environment_1.prepare_environment)();
-            console.log("🚀 Validating CHANGELOG.md...");
-            yield (0, changelog_1.retrieve_changelog)();
-            yield (0, changelog_1.validate_changelog)();
-            console.log("✅ Your CHANGELOG.md complies to the keepachangelog convention");
-            const can_release = yield (0, changelog_1.has_unreleased_version)();
-            const publish_release = JSON.parse(core.getInput("publish"));
-            if (!can_release || !publish_release) {
-                return;
-            }
-            console.log("🏁 Releasing your CHANGELOG.md");
-            yield (0, changelog_1.release_changelog)();
-            console.log("📦 Creating a new GitHub Release...");
-            const released_version = yield (0, changelog_1.create_github_release)();
-            console.log("🚢 Published the GitHub Release!");
-            core.setOutput("version", released_version);
-        }
-        catch (ex) {
-            core.setFailed(ex.message);
-        }
-    });
-}
-run();
 
 
 /***/ }),
@@ -32252,12 +32178,59 @@ module.exports = parseParams
 /******/ 	if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = __dirname + "/";
 /******/ 	
 /************************************************************************/
-/******/ 	
-/******/ 	// startup
-/******/ 	// Load entry module and return exports
-/******/ 	// This entry module is referenced by other modules so it can't be inlined
-/******/ 	var __webpack_exports__ = __nccwpck_require__(399);
-/******/ 	module.exports = __webpack_exports__;
-/******/ 	
+var __webpack_exports__ = {};
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
+(() => {
+"use strict";
+var exports = __webpack_exports__;
+
+/**
+ * Copyright (C) 2020-2022, TomTom (http://tomtom.com).
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+const core = __nccwpck_require__(2186);
+const environment_1 = __nccwpck_require__(6869);
+const changelog_1 = __nccwpck_require__(8598);
+async function run() {
+    try {
+        console.log("🌲 Preparing environment...");
+        await (0, environment_1.prepare_environment)();
+        console.log("🚀 Validating CHANGELOG.md...");
+        await (0, changelog_1.retrieve_changelog)();
+        await (0, changelog_1.validate_changelog)();
+        console.log("✅ Your CHANGELOG.md complies to the keepachangelog convention");
+        const can_release = await (0, changelog_1.has_unreleased_version)();
+        const publish_release = JSON.parse(core.getInput("publish"));
+        if (!can_release || !publish_release) {
+            return;
+        }
+        console.log("🏁 Releasing your CHANGELOG.md");
+        await (0, changelog_1.release_changelog)();
+        console.log("📦 Creating a new GitHub Release...");
+        const released_version = await (0, changelog_1.create_github_release)();
+        console.log("🚢 Published the GitHub Release!");
+        core.setOutput("version", released_version);
+    }
+    catch (ex) {
+        core.setFailed(ex.message);
+    }
+}
+run();
+
+})();
+
+module.exports = __webpack_exports__;
 /******/ })()
 ;
