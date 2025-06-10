@@ -5,15 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Removed
+- Removed support for Node16 in favor of Node20
+- Removed support for Python >=3.7,<=3.8 in favor of minimum version 3.9
+
 ### Added
 - Upgraded keepachangelog-manager to v4
-
-## [2.0.0] - 2025-06-10
-### Removed
-- Removed support for Node16
-
-### Added
-- Added Support for Node20
 
 ### Security
 - Upgrade `@actions/github` to address security concerns (CVE-2025-25290, CVE-2025-25288, CVE-2025-25289)
