@@ -15,21 +15,25 @@
   },
   "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "bugs": {
     "url": "https://github.com/tomtom-international/keepachangelog-action/issues"
   },
   "homepage": "https://github.com/tomtom-international/keepachangelog-action#readme",
   "dependencies": {
-    "@actions/core": "^1.10.0",
+    "@actions/core": "^1.11.1",
     "@actions/exec": "^1.1.1",
-    "@actions/github": "^5.1.1"
+    "@actions/github": "^6.0.1"
   },
   "devDependencies": {
-    "@types/node": "^18.15.5",
     "prettier": "2.8.6",
-    "typescript": "^4.9.4",
+    "typescript": "^5",
+    "@tsconfig/node20": "^20",
+    "@types/node": "^20",
     "@vercel/ncc": "^0.36.0"
   },
-  "files": ["requirements.txt"]
+  "files": ["requirements.txt"],
+  "engines": {
+    "node": ">=20"
+  }
 }

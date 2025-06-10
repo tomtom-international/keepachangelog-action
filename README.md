@@ -24,7 +24,7 @@ This GitHub Action allows you to setup a full release workflow based around your
 
 ## Prerequisites
 
-* [(Keep a) Changelog Manager] requires at least `Python>3.7`
+* [(Keep a) Changelog Manager] requires at least `Python>=3.9`
 * `pip` needs to be installed for this Python version 
 
 ## Usage
@@ -44,10 +44,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Python v3.7
+      - name: Setup Python v3.9
         uses: actions/setup-python@v3
         with:
-          python-version: '3.7'
+          python-version: '3.9'
 
       - name: Validate Changelog
         uses: tomtom-international/keepachangelog-action
@@ -83,10 +83,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Setup Python v3.7
+      - name: Setup Python v3.9
         uses: actions/setup-python@v3
         with:
-          python-version: '3.7'
+          python-version: '3.9'
 
       - name: Release Changelog
         uses: tomtom-international/keepachangelog-action

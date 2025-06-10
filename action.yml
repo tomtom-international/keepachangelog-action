@@ -51,5 +51,5 @@ outputs:
     description: 'The version of the released CHANGELOG.md'
 
 runs:
-  using: 'node16'
+  using: 'node20'
   main: 'dist/index.js'

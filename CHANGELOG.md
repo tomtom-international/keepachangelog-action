@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+### Removed
+- Removed support for Node16 in favor of Node20
+- Removed support for Python >=3.7,<=3.8 in favor of minimum version 3.9
+
+### Added
+- Upgraded keepachangelog-manager to v4
+
+### Security
+- Upgrade `@actions/github` to address security concerns (CVE-2025-25290, CVE-2025-25288, CVE-2025-25289)
+
 ## [1.2.1] - 2022-09-01
 ### Changed
 - Renamed action to `Keepachangelog Manager`
@@ -46,4 +57,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Validation of the CHANGELOG.md based on keepachangelog convention
 - Ability to create/update a draft GitHub release based on the CHANGELOG.md
 - Allow releasing (using PRs) of the CHANGELOG.md
-

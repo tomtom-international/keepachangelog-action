@@ -223,7 +223,15 @@ export async function release_changelog() {
     encoding: "utf8",
     flag: "r",
   });
-  let request = {
+  let request: {
+    path: string;
+    message: any;
+    content: string;
+    branch: any;
+    owner: string;
+    repo: string;
+    sha?: string;
+  } = {
     ...repository,
     path: "CHANGELOG.md",
     message: commit_message,

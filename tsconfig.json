@@ -1,12 +1,6 @@
 {
-    "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-      "outDir": "./lib",
-      "rootDir": "./src",
-      "strict": true,
-      "noImplicitAny": false,
-      "esModuleInterop": true
-    },
-    "exclude": ["node_modules"]
-  }
+  "extends": "@tsconfig/node20/tsconfig.json",
+  "include": ["src/"],
+  "compileOnSave": false,
+  "exclude": ["node_modules"]
+}

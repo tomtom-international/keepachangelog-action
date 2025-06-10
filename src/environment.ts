@@ -24,7 +24,7 @@ import * as path from "path";
  * @param major Major version
  * @param minor Minor version
  */
-async function check_python_prerequisites(major, minor) {
+async function check_python_prerequisites(major: number, minor: number) {
   const python_version_re = /Python\s*(\d+)\.(\d+)\.(\d+)/;
   const { stdout: python_version } = await exec.getExecOutput(
     "python3",
@@ -44,7 +44,7 @@ async function check_python_prerequisites(major, minor) {
   }
 
   try {
-    const { stdout: pip_version } = await exec.getExecOutput(
+    const { stdout: _ } = await exec.getExecOutput(
       "python3",
       ["-m", "pip", "--version"],
       { silent: true }
